@@ -1,0 +1,43 @@
+apply plugin: 'com.android.application'
+
+apply plugin: 'kotlin-android'
+
+apply plugin: 'kotlin-android-extensions'
+
+apply plugin: 'kotlin-kapt'
+
+android {
+    compileSdkVersion 26
+    defaultConfig {
+        applicationId "com.snail.update"
+        minSdkVersion 20
+        targetSdkVersion 26
+        versionCode 1
+        versionName "1.0"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    sourceSets {
+        main {
+            assets.srcDirs = ['src/assets', 'src/assets/']
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation"org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
+    implementation 'com.android.support:appcompat-v7:26.1.0'
+    implementation 'com.android.support.constraint:constraint-layout:1.0.2'
+
+    //动态权限管理
+    compile 'com.github.hotchemi:permissionsdispatcher:3.0.1'
+    annotationProcessor "com.github.hotchemi:permissionsdispatcher-processor:3.0.1"
+    compile 'com.squareup.okhttp3:okhttp:3.8.1'
+}
+
+
