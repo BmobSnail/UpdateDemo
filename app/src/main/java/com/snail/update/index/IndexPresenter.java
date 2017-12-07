@@ -29,6 +29,7 @@ public class IndexPresenter implements IndexContract.Presenter {
     @Override
     public void checkUpdate(String local) {
         //假设获取得到最新版本
+        //一般还要和忽略的版本做比对。。这里就不累赘了
         String version = "2.0";
         if (!local.equals(version)) {
             view.showDialog(version);
@@ -49,8 +50,8 @@ public class IndexPresenter implements IndexContract.Presenter {
      */
     @Override
     public void downApk() {
-//        String url = "http://nosdn-yx.127.net/yxgame/9a52e11533aa469f8f29a38e5ec4f9c0.apk?download=com.netease.hyxd.yixin.163yun.wxkj_1.apk";
-        String url = "http://gyxz.exmmw.cn/a3/rj_sp1/niabajiaoyou.apk";
+        //荒野求生的apk
+        String url = "http://nosdn-yx.127.net/yxgame/9a52e11533aa469f8f29a38e5ec4f9c0.apk?download=com.netease.hyxd.yixin.163yun.wxkj_1.apk";
         DownloadUtils.getInstance().download(url,
                 Environment.getExternalStorageDirectory().getPath(),
                 new DownloadUtils.OnDownloadListener() {

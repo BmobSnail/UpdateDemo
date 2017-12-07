@@ -27,7 +27,7 @@ import static android.os.Process.killProcess;
 /**
  * Created by snail
  * on 2017/12/6.
- * Todo
+ * Todo 这个是用okhttp3的版本更新。其实用户体验上用服务来下载会更好
  */
 
 
@@ -82,12 +82,7 @@ public class MainActivity extends AppCompatActivity implements IndexContract.Vie
 
     @Override
     public void showProgress(final int size) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mTextView.setText(String.format(Locale.CHINESE,"%d%%", size));
-            }
-        });
+        mTextView.setText(String.format(Locale.CHINESE,"%d%%", size));
     }
 
     @Override

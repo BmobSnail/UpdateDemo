@@ -1,5 +1,8 @@
 package com.snail.update.utils;
 
+import android.os.Handler;
+import android.os.Message;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -21,6 +24,7 @@ public class DownloadUtils {
 
     private static DownloadUtils mInstance;
     private final OkHttpClient okHttpClient;
+    private OnDownloadListener listener;
 
     public static DownloadUtils getInstance() {
         if (mInstance == null) {
@@ -37,18 +41,25 @@ public class DownloadUtils {
         okHttpClient = new OkHttpClient();
     }
 
-    public void download(final String url, final String path, final OnDownloadListener listener){
+    public void download(final String url, final String path, OnDownloadListener listener){
+        this.listener = listener;
         Request request = new Request.Builder().url(url).build();
         okHttpClient.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                listener.downFail(e.getMessage());
+                Message message = Message.obtain();
+                message.what = 0;
+                message.obj = e.getMessage();
+                handler.sendMessage(message);
             }
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
+                Message message = Message.obtain();
                 if (response.body() == null) {
-                    listener.downFail("下载错误");
+                    message.what = 0;
+                    message.obj = "下载错误";
+                    handler.sendMessage(message);
                     return;
                 }
                 InputStream is = null;
@@ -65,10 +76,14 @@ public class DownloadUtils {
                         fos.write(buff,0,len);
                         sum+=len;
                         int progress = (int) (sum * 1.0f / total * 100);
-                        listener.downProgress(progress);
+                        message.what = 1;
+                        message.obj = progress;
+                        handler.sendMessage(message);
                     }
                     fos.flush();
-                    listener.downSuccess(file.getAbsolutePath());
+                    message.what = 2;
+                    message.obj = file.getAbsoluteFile();
+                    handler.sendMessage(message);
                 } catch (Exception e) {
                     e.printStackTrace();
                 } finally {
@@ -96,6 +111,27 @@ public class DownloadUtils {
             }
         return null ;
     }
+
+    //把处理结果放回ui线程
+    private Handler handler = new Handler(new Handler.Callback() {
+        @Override
+        public boolean handleMessage(Message msg) {
+            switch (msg.what) {
+                case 0:
+                    listener.downFail((String) msg.obj);
+                    break;
+
+                case 1:
+                    listener.downProgress((Integer) msg.obj);
+                    break;
+
+                case 2:
+                    listener.downSuccess((String) msg.obj);
+                    break;
+            }
+            return false;
+        }
+    });
 
     public interface OnDownloadListener{
         void downFail(String msg);
