@@ -1,10 +1,17 @@
 package com.snail.update.index;
 
-import android.os.Environment;
+import android.app.Service;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
+import android.os.IBinder;
 import android.util.Log;
 
-import com.snail.update.utils.DownloadUtils;
+import com.snail.update.utils.DownloadService;
 import com.snail.update.utils.SpUtils;
+
+import java.io.File;
 
 /**
  * Created by snail
@@ -15,6 +22,7 @@ import com.snail.update.utils.SpUtils;
 public class IndexPresenter implements IndexContract.Presenter {
 
     private IndexContract.View view;
+    private ServiceConnection conn;
 
     public IndexPresenter(IndexContract.View view) {
         this.view = view;
@@ -32,7 +40,7 @@ public class IndexPresenter implements IndexContract.Presenter {
         //一般还要和忽略的版本做比对。。这里就不累赘了
         String version = "2.0";
         if (!local.equals(version)) {
-            view.showDialog(version);
+            view.showUpdate(version);
         }
     }
 
@@ -42,33 +50,54 @@ public class IndexPresenter implements IndexContract.Presenter {
     @Override
     public void setIgnore(String version) {
         SpUtils.getInstance().putString("ignore",version);
-        Log.i("-->","ignore:"+version);
     }
 
     /**
      * 模拟网络下载
      */
     @Override
-    public void downApk() {
-        //荒野求生的apk
-        String url = "http://nosdn-yx.127.net/yxgame/9a52e11533aa469f8f29a38e5ec4f9c0.apk?download=com.netease.hyxd.yixin.163yun.wxkj_1.apk";
-        DownloadUtils.getInstance().download(url,
-                Environment.getExternalStorageDirectory().getPath(),
-                new DownloadUtils.OnDownloadListener() {
-            @Override
-            public void downFail(String msg) {
-                view.showFail(msg);
-            }
+    public void downApk(Context context) {
+        final String url = "https://dianfenqi.cn/data/ffmpeg/upload/images/android/20171206/dianfenqi.apk";
+        if (conn == null)
+            conn = new ServiceConnection() {
+                @Override
+                public void onServiceConnected(ComponentName name, IBinder service) {
+                    DownloadService.DownloadBinder binder = (DownloadService.DownloadBinder) service;
+                    DownloadService myService = binder.getService();
+                    myService.downApk(url, new DownloadService.DownloadCallback() {
+                        @Override
+                        public void onPrepare() {
 
-            @Override
-            public void downSuccess(String path) {
-               view.install(path);
-            }
+                        }
 
-            @Override
-            public void downProgress(int progress) {
-                view.showProgress(progress);
-            }
-        });
+                        @Override
+                        public void onProgress(int progress) {
+                            view.showProgress(progress);
+                        }
+
+                        @Override
+                        public void onComplete(File file) {
+                            view.showComplete(file);
+                        }
+
+                        @Override
+                        public void onFail(String msg) {
+                            view.showFail(msg);
+                        }
+                    });
+                }
+
+                @Override
+                public void onServiceDisconnected(ComponentName name) {
+                    //意味中断，较小发生，酌情处理
+                }
+            };
+        Intent intent = new Intent(context,DownloadService.class);
+        context.bindService(intent, conn, Service.BIND_AUTO_CREATE);
+    }
+
+    @Override
+    public void unbind(Context context) {
+        context.unbindService(conn);
     }
 }

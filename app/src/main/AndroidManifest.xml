@@ -27,8 +27,8 @@
                 android:resource="@xml/file_paths"/>
         </provider>
 
+        <service android:name=".utils.DownloadService" />
 
-        <!--<activity android:name="kt.MainActivity">-->
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

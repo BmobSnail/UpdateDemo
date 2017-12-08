@@ -18,6 +18,7 @@ import android.widget.Toast;
 
 import com.snail.update.index.IndexContract;
 import com.snail.update.index.IndexPresenter;
+import com.snail.update.utils.DownloadService;
 
 import java.io.File;
 import java.util.Locale;
@@ -27,11 +28,11 @@ import static android.os.Process.killProcess;
 /**
  * Created by snail
  * on 2017/12/6.
- * Todo 这个是用okhttp3的版本更新。其实用户体验上用服务来下载会更好
+ * Todo service 配合 okhttp3 下载更新
  */
 
 
-public class MainActivity extends AppCompatActivity implements IndexContract.View {
+public class MainActivity extends AppCompatActivity implements IndexContract.View{
 
     private Dialog mDialog;
 
@@ -58,7 +59,7 @@ public class MainActivity extends AppCompatActivity implements IndexContract.Vie
     }
 
     @Override
-    public void showDialog(final String version) {
+    public void showUpdate(final String version) {
         if (mDialog == null)
             mDialog = new AlertDialog.Builder(this)
                     .setTitle("检测到有新版本")
@@ -66,7 +67,7 @@ public class MainActivity extends AppCompatActivity implements IndexContract.Vie
                     .setPositiveButton("更新", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            mPresenter.downApk();
+                            mPresenter.downApk(MainActivity.this);
                         }
                     })
                     .setNegativeButton("忽略", new DialogInterface.OnClickListener() {
@@ -76,29 +77,20 @@ public class MainActivity extends AppCompatActivity implements IndexContract.Vie
                         }
                     })
                     .create();
-
         mDialog.show();
     }
 
+
     @Override
-    public void showProgress(final int size) {
-        mTextView.setText(String.format(Locale.CHINESE,"%d%%", size));
+    public void showProgress(int progress) {
+        mTextView.setText(String.format(Locale.CHINESE,"%d%%", progress));
     }
 
     @Override
-    public void showFail(String msg) {
-        Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
-    }
-
-    @Override
-    public void install(String path) {
-        installApp(path);
-    }
-
-    private void installApp(String appFile) {
+    public void showComplete(File file) {
         try {
             String authority = getApplicationContext().getPackageName() + ".fileProvider";
-            Uri fileUri = FileProvider.getUriForFile(this, authority, new File(appFile));
+            Uri fileUri = FileProvider.getUriForFile(this, authority, file);
             Intent intent = new Intent(Intent.ACTION_VIEW);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
@@ -107,7 +99,7 @@ public class MainActivity extends AppCompatActivity implements IndexContract.Vie
                 intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 intent.setDataAndType(fileUri, "application/vnd.android.package-archive");
             } else {
-                Uri uri = Uri.fromFile(new File(appFile));
+                Uri uri = Uri.fromFile(file);
                 intent.setDataAndType(uri, "application/vnd.android.package-archive");
             }
 
@@ -119,6 +111,17 @@ public class MainActivity extends AppCompatActivity implements IndexContract.Vie
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public void showFail(String msg) {
+        Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    protected void onDestroy() {
+        mPresenter.unbind(this);
+        super.onDestroy();
     }
 
 }

@@ -1,5 +1,9 @@
 package com.snail.update.index;
 
+import android.content.Context;
+
+import java.io.File;
+
 /**
  * Created by snail
  * on 2017/12/6.
@@ -9,15 +13,16 @@ package com.snail.update.index;
 public interface IndexContract {
 
     interface View {
-        void showDialog(String version);
-        void showProgress(int size);
+        void showUpdate(String version);
+        void showProgress(int progress);
         void showFail(String msg);
-        void install(String path);
+        void showComplete(File file);
     }
 
     interface Presenter{
         void checkUpdate(String local);
         void setIgnore(String version);
-        void downApk();
+        void downApk(Context context);
+        void unbind(Context context);
     }
 }
