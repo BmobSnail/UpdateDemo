@@ -39,7 +39,8 @@ public class IndexPresenter implements IndexContract.Presenter {
         //假设获取得到最新版本
         //一般还要和忽略的版本做比对。。这里就不累赘了
         String version = "2.0";
-        if (!local.equals(version)) {
+        String ignore = SpUtils.getInstance().getString("ignore");
+        if (!ignore.equals(version) && !ignore.equals(local)) {
             view.showUpdate(version);
         }
     }

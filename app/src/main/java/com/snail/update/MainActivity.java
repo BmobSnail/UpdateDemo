@@ -12,13 +12,14 @@ import android.support.annotation.Nullable;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
+import android.view.KeyEvent;
+import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.snail.update.index.IndexContract;
 import com.snail.update.index.IndexPresenter;
-import com.snail.update.utils.DownloadService;
+import com.snail.update.utils.SpUtils;
 
 import java.io.File;
 import java.util.Locale;
@@ -46,6 +47,15 @@ public class MainActivity extends AppCompatActivity implements IndexContract.Vie
         setContentView(R.layout.activity_main);
 
         mTextView = findViewById(R.id.main_textView);
+        mTextView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mTextView.getText().toString().equals("下载进度")) {
+                    SpUtils.getInstance().putString("ignore","-1");
+                    mPresenter.checkUpdate("1.0");
+                }
+            }
+        });
 
         mPresenter = new IndexPresenter(this);
 
@@ -77,6 +87,16 @@ public class MainActivity extends AppCompatActivity implements IndexContract.Vie
                         }
                     })
                     .create();
+
+        //重写这个，一般是强制更新不能取消弹窗
+        mDialog.setCanceledOnTouchOutside(false);
+        mDialog.setOnKeyListener(new DialogInterface.OnKeyListener() {
+            @Override
+            public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
+                return mDialog != null && mDialog.isShowing();
+            }
+        });
+
         mDialog.show();
     }
 
