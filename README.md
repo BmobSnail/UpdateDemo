@@ -10,7 +10,6 @@
 - 下载完成自动安装
 ```
 
-> v1.0.1
-- 加上动态读写权限判断
+> 加上动态读写权限判断
 
 ![image](https://github.com/BmobSnail/UpdateDemo/blob/master/images/UpdateDemo.gif)
