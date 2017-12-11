@@ -9,4 +9,4 @@
 - 更新完自动跳转安装界面
 ```
 
-![image ][]
+![image](https://github.com/BmobSnail/UpdateDemo/blob/master/images/UpdateDemo.gif)
