@@ -88,12 +88,12 @@ public class MainActivity extends AppCompatActivity implements IndexContract.Vie
                     })
                     .create();
 
-        //重写这个，一般是强制更新不能取消弹窗
+        //重写这俩个方法，一般是强制更新不能取消弹窗
         mDialog.setCanceledOnTouchOutside(false);
         mDialog.setOnKeyListener(new DialogInterface.OnKeyListener() {
             @Override
             public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
-                return mDialog != null && mDialog.isShowing();
+                return keyCode == KeyEvent.KEYCODE_BACK && mDialog != null && mDialog.isShowing();
             }
         });
 
