@@ -1,5 +1,6 @@
 package com.snail.update;
 
+import android.Manifest;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -8,6 +9,7 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
@@ -24,6 +26,12 @@ import com.snail.update.utils.SpUtils;
 import java.io.File;
 import java.util.Locale;
 
+import permissions.dispatcher.NeedsPermission;
+import permissions.dispatcher.OnPermissionDenied;
+import permissions.dispatcher.OnShowRationale;
+import permissions.dispatcher.PermissionRequest;
+import permissions.dispatcher.RuntimePermissions;
+
 import static android.os.Process.killProcess;
 
 /**
@@ -33,6 +41,8 @@ import static android.os.Process.killProcess;
  */
 
 
+
+@RuntimePermissions
 public class MainActivity extends AppCompatActivity implements IndexContract.View{
 
     private Dialog mDialog;
@@ -46,26 +56,18 @@ public class MainActivity extends AppCompatActivity implements IndexContract.Vie
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        mPresenter = new IndexPresenter(this);
         mTextView = findViewById(R.id.main_textView);
         mTextView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (mTextView.getText().toString().equals("下载进度")) {
                     SpUtils.getInstance().putString("ignore","-1");
-                    mPresenter.checkUpdate("1.0");
+                    MainActivityPermissionsDispatcher.needStorageWithPermissionCheck(MainActivity.this);
                 }
             }
         });
-
-        mPresenter = new IndexPresenter(this);
-
-        try {
-            PackageInfo pi = getPackageManager().getPackageInfo(getPackageName(),0);
-            String local = pi.versionName;
-            mPresenter.checkUpdate(local);
-        } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
-        }
+        MainActivityPermissionsDispatcher.needStorageWithPermissionCheck(this);
     }
 
     @Override
@@ -144,4 +146,50 @@ public class MainActivity extends AppCompatActivity implements IndexContract.Vie
         super.onDestroy();
     }
 
+    @NeedsPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+    void needStorage() {
+        try {
+            PackageInfo pi = getPackageManager().getPackageInfo(getPackageName(),0);
+            String local = pi.versionName;
+            mPresenter.checkUpdate(local);
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == 100) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                needStorage();
+            }
+        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        MainActivityPermissionsDispatcher.onRequestPermissionsResult(this, requestCode, grantResults);
+    }
+
+    @OnShowRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+    void showRational(final PermissionRequest request) {
+        new AlertDialog.Builder(this)
+                .setTitle("温馨提示")
+                .setMessage("赋予此应用读写文件权限用于版本更新，是否同意?")
+                .setPositiveButton("同意", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        request.proceed();
+                    }
+                })
+                .setNegativeButton("拒绝", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        request.cancel();
+                    }
+                })
+                .show();
+    }
+
+    @OnPermissionDenied(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+    void deniedStorage() {
+        Toast.makeText(this, "我已经拒绝过你了，别来了", Toast.LENGTH_SHORT).show();
+    }
 }
